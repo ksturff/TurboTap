@@ -7,7 +7,7 @@
   <style>
     body { margin: 0; overflow: hidden; background: #0d0d0d; }
     canvas { display: block; margin: 0 auto; background: #0d0d0d; }
-    #startScreen, #pauseBtn, #resumeBtn, #restartBtn, #gameOverScreen {
+    button {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -23,8 +23,7 @@
     #startScreen { display: block; }
     #pauseBtn { top: 20px; left: 40%; transform: translateX(-50%); display: none; }
     #resumeBtn { top: 20px; left: 60%; transform: translateX(-50%); display: none; }
-    #restartBtn { display: none; }
-    #gameOverScreen { display: none; }
+    #restartBtn, #gameOverScreen { display: none; }
     #coinCounter, #distanceCounter {
       position: absolute;
       color: white;
@@ -38,6 +37,7 @@
 
 <body>
 <canvas id="gameCanvas" width="480" height="720"></canvas>
+
 <div id="coinCounter">Coins: 0</div>
 <div id="distanceCounter">Distance: 0m</div>
 
@@ -50,172 +50,170 @@
 <script>
 window.onload = function() {
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
 
-let gameStarted = false;
-let gamePaused = false;
-let gameOver = false;
+  let gameStarted = false;
+  let gamePaused = false;
+  let gameOver = false;
 
-let player = { x: 50, y: 500, width: 30, height: 30, vy: 0 };
-let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false }];
-let coins = [];
-let distance = 0;
-let speed = 3;
-let collectedCoins = 0;
+  let player = { x: 50, y: 500, width: 30, height: 30, vy: 0 };
+  let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false }];
+  let coins = [];
+  let distance = 0;
+  let speed = 3;
+  let collectedCoins = 0;
 
-// ✅ Now attaching event listeners properly:
-document.getElementById('startScreen').addEventListener('click', startGame);
-document.getElementById('pauseBtn').addEventListener('click', pauseGame);
-document.getElementById('resumeBtn').addEventListener('click', resumeGame);
-document.getElementById('restartBtn').addEventListener('click', restartGame);
-document.getElementById('gameOverScreen').addEventListener('click', restartGame);
+  document.getElementById('startScreen').addEventListener('click', startGame);
+  document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+  document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+  document.getElementById('restartBtn').addEventListener('click', restartGame);
+  document.getElementById('gameOverScreen').addEventListener('click', restartGame);
 
-function startGame() {
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('gameOverScreen').style.display = 'none';
-  document.getElementById('pauseBtn').style.display = 'block';
-  document.getElementById('restartBtn').style.display = 'none';
-  gameStarted = true;
-  gamePaused = false;
-  requestAnimationFrame(gameLoop);
-}
-
-function pauseGame() {
-  gamePaused = true;
-  document.getElementById('pauseBtn').style.display = 'none';
-  document.getElementById('resumeBtn').style.display = 'block';
-}
-
-function resumeGame() {
-  gamePaused = false;
-  document.getElementById('resumeBtn').style.display = 'none';
-  document.getElementById('pauseBtn').style.display = 'block';
-  requestAnimationFrame(gameLoop);
-}
-
-function endGame() {
-  gameOver = true;
-  gameStarted = false;
-  document.getElementById('pauseBtn').style.display = 'none';
-  document.getElementById('resumeBtn').style.display = 'none';
-  document.getElementById('gameOverScreen').innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
-  document.getElementById('gameOverScreen').style.display = 'block';
-}
-
-function restartGame() {
-  window.location.reload();
-}
-
-document.addEventListener('keydown', function(e) {
-  if (e.code === 'Space' && player.vy === 0) {
-    player.vy = -12;
+  function startGame() {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('gameOverScreen').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+    document.getElementById('restartBtn').style.display = 'none';
+    gameStarted = true;
+    gamePaused = false;
+    requestAnimationFrame(gameLoop);
   }
-});
 
-canvas.addEventListener('touchstart', function() {
-  if (player.vy === 0) {
-    player.vy = -12;
+  function pauseGame() {
+    gamePaused = true;
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'block';
   }
-});
 
-function drawEverything() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function resumeGame() {
+    gamePaused = false;
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+    requestAnimationFrame(gameLoop);
+  }
 
-  // Draw platforms
-  ctx.fillStyle = 'gray';
-  for (let plat of platforms) {
-    ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-    if (plat.obstacle) {
-      ctx.fillStyle = 'red';
-      ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
-      ctx.fillStyle = 'gray'; // reset fill
+  function endGame() {
+    gameOver = true;
+    gameStarted = false;
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('gameOverScreen').innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
+    document.getElementById('gameOverScreen').style.display = 'block';
+  }
+
+  function restartGame() {
+    window.location.reload();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && player.vy === 0) {
+      player.vy = -12;
     }
-  }
+  });
 
-  // Draw coins
-  ctx.fillStyle = 'gold';
-  for (let coin of coins) {
-    ctx.beginPath();
-    ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Draw player
-  ctx.fillStyle = 'cyan';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-}
-
-function gameLoop() {
-  if (!gameStarted || gamePaused || gameOver) return;
-
-  distance += 0.1;
-  document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
-  document.getElementById('coinCounter').innerText = `Coins: ${collectedCoins}`;
-
-  speed += 0.0005;
-
-  for (let plat of platforms) plat.x -= speed;
-  for (let coin of coins) coin.x -= speed;
-
-  if (platforms[platforms.length - 1].x < 300) {
-    const platWidth = 80 + Math.random() * 120;
-    const platY = 400 + Math.random() * 250;
-    const hasObstacle = Math.random() < 0.3;
-    platforms.push({ x: 480, y: platY, width: platWidth, height: 20, obstacle: hasObstacle });
-
-    if (Math.random() < 0.5) {
-      coins.push({ x: 480 + platWidth / 2 - 10, y: platY - 30, width: 20, height: 20 });
+  canvas.addEventListener('touchstart', function() {
+    if (player.vy === 0) {
+      player.vy = -12;
     }
-  }
+  });
 
-  if (platforms[0].x + platforms[0].width < 0) platforms.shift();
-  if (coins.length > 0 && coins[0].x + coins[0].width < 0) coins.shift();
+  function drawEverything() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  player.vy += 0.5;
-  player.y += player.vy;
-
-  let onGround = false;
-  for (let plat of platforms) {
-    if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
-        player.y + player.height > plat.y && player.y + player.height < plat.y + plat.height + 10 && player.vy >= 0) {
-      player.y = plat.y - player.height;
-      player.vy = 0;
-      onGround = true;
-    }
-
-    if (plat.obstacle) {
-      const obstacleX = plat.x + plat.width / 2 - 10;
-      const obstacleY = plat.y - 20;
-      const obstacleW = 20;
-      const obstacleH = 20;
-
-      if (player.x + player.width > obstacleX && player.x < obstacleX + obstacleW &&
-          player.y + player.height > obstacleY && player.y < obstacleY + obstacleH) {
-        endGame();
-        return;
+    // Draw platforms
+    ctx.fillStyle = 'gray';
+    for (let plat of platforms) {
+      ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+      if (plat.obstacle) {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
+        ctx.fillStyle = 'gray'; // Reset
       }
     }
-  }
 
-  for (let i = coins.length - 1; i >= 0; i--) {
-    const coin = coins[i];
-    if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
-        player.y + player.height > coin.y && player.y < coin.y + coin.height) {
-      collectedCoins++;
-      coins.splice(i, 1);
+    // Draw coins
+    ctx.fillStyle = 'gold';
+    for (let coin of coins) {
+      ctx.beginPath();
+      ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    // Draw player
+    ctx.fillStyle = 'cyan';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
   }
 
-  if (player.y > 720) {
-    endGame();
-    return;
+  function gameLoop() {
+    if (!gameStarted || gamePaused || gameOver) return;
+
+    distance += 0.1;
+    document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
+    document.getElementById('coinCounter').innerText = `Coins: ${collectedCoins}`;
+
+    speed += 0.0005;
+
+    for (let plat of platforms) plat.x -= speed;
+    for (let coin of coins) coin.x -= speed;
+
+    if (platforms[platforms.length - 1].x < 300) {
+      const platWidth = 80 + Math.random() * 120;
+      const platY = 400 + Math.random() * 250;
+      const hasObstacle = Math.random() < 0.3;
+      platforms.push({ x: 480, y: platY, width: platWidth, height: 20, obstacle: hasObstacle });
+
+      if (Math.random() < 0.5) {
+        coins.push({ x: 480 + platWidth / 2 - 10, y: platY - 30, width: 20, height: 20 });
+      }
+    }
+
+    if (platforms[0].x + platforms[0].width < 0) platforms.shift();
+    if (coins.length > 0 && coins[0].x + coins[0].width < 0) coins.shift();
+
+    player.vy += 0.5;
+    player.y += player.vy;
+
+    let onGround = false;
+    for (let plat of platforms) {
+      if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
+          player.y + player.height > plat.y && player.y + player.height < plat.y + plat.height + 10 && player.vy >= 0) {
+        player.y = plat.y - player.height;
+        player.vy = 0;
+        onGround = true;
+      }
+
+      if (plat.obstacle) {
+        const obstacleX = plat.x + plat.width / 2 - 10;
+        const obstacleY = plat.y - 20;
+        const obstacleW = 20;
+        const obstacleH = 20;
+
+        if (player.x + player.width > obstacleX && player.x < obstacleX + obstacleW &&
+            player.y + player.height > obstacleY && player.y < obstacleY + obstacleH) {
+          endGame();
+          return;
+        }
+      }
+    }
+
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const coin = coins[i];
+      if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
+          player.y + player.height > coin.y && player.y < coin.y + coin.height) {
+        collectedCoins++;
+        coins.splice(i, 1);
+      }
+    }
+
+    if (player.y > 720) {
+      endGame();
+      return;
+    }
+
+    drawEverything();
+    requestAnimationFrame(gameLoop);
   }
-
-  drawEverything();
-  requestAnimationFrame(gameLoop);
-}
-
 };
 </script>
 
