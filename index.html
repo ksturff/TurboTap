@@ -54,8 +54,8 @@ const ctx = canvas.getContext('2d');
 const runnerImg = new Image();
 runnerImg.src = 'Runner1.png';
 
+// Wait for runner to load
 runnerImg.onload = function() {
-  // Only run the game once the runner image is fully loaded
   initializeGame();
 };
 
@@ -113,16 +113,15 @@ function initializeGame() {
     window.location.reload();
   }
 
+  // 🏃‍♂️ Jump anytime on Space or Tap
   document.addEventListener('keydown', function(e) {
-    if (e.code === 'Space' && player.vy === 0) {
+    if (e.code === 'Space') {
       player.vy = -12;
     }
   });
 
   canvas.addEventListener('touchstart', function() {
-    if (player.vy === 0) {
-      player.vy = -12;
-    }
+    player.vy = -12;
   });
 
   function drawEverything() {
