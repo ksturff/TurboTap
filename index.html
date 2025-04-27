@@ -40,11 +40,12 @@
 <canvas id="gameCanvas" width="480" height="720"></canvas>
 <div id="coinCounter">Coins: 0</div>
 <div id="distanceCounter">Distance: 0m</div>
-<button id="startScreen" onclick="startGame()">Start Game</button>
-<button id="pauseBtn" onclick="pauseGame()">Pause</button>
-<button id="resumeBtn" onclick="resumeGame()">Resume</button>
-<button id="restartBtn" onclick="restartGame()">Restart</button>
-<button id="gameOverScreen" onclick="restartGame()">Game Over - Click to Restart</button>
+
+<button id="startScreen">Start Game</button>
+<button id="pauseBtn">Pause</button>
+<button id="resumeBtn">Resume</button>
+<button id="restartBtn">Restart</button>
+<button id="gameOverScreen">Game Over - Click to Restart</button>
 
 <script>
 window.onload = function() {
@@ -63,11 +64,18 @@ let distance = 0;
 let speed = 3;
 let collectedCoins = 0;
 
+// ✅ Now attaching event listeners properly:
+document.getElementById('startScreen').addEventListener('click', startGame);
+document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+document.getElementById('restartBtn').addEventListener('click', restartGame);
+document.getElementById('gameOverScreen').addEventListener('click', restartGame);
+
 function startGame() {
-  startScreen.style.display = 'none';
-  gameOverScreen.style.display = 'none';
-  pauseBtn.style.display = 'block';
-  restartBtn.style.display = 'none';
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = 'block';
+  document.getElementById('restartBtn').style.display = 'none';
   gameStarted = true;
   gamePaused = false;
   requestAnimationFrame(gameLoop);
@@ -75,24 +83,24 @@ function startGame() {
 
 function pauseGame() {
   gamePaused = true;
-  pauseBtn.style.display = 'none';
-  resumeBtn.style.display = 'block';
+  document.getElementById('pauseBtn').style.display = 'none';
+  document.getElementById('resumeBtn').style.display = 'block';
 }
 
 function resumeGame() {
   gamePaused = false;
-  resumeBtn.style.display = 'none';
-  pauseBtn.style.display = 'block';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = 'block';
   requestAnimationFrame(gameLoop);
 }
 
 function endGame() {
   gameOver = true;
   gameStarted = false;
-  pauseBtn.style.display = 'none';
-  resumeBtn.style.display = 'none';
-  gameOverScreen.innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
-  gameOverScreen.style.display = 'block';
+  document.getElementById('pauseBtn').style.display = 'none';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('gameOverScreen').innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
+  document.getElementById('gameOverScreen').style.display = 'block';
 }
 
 function restartGame() {
@@ -121,7 +129,7 @@ function drawEverything() {
     if (plat.obstacle) {
       ctx.fillStyle = 'red';
       ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
-      ctx.fillStyle = 'gray'; // reset fill color
+      ctx.fillStyle = 'gray'; // reset fill
     }
   }
 
