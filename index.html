@@ -52,12 +52,12 @@
 <audio id="deathSound" src="assets/death.mp3"></audio>
 
 <script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
 let gameStarted = false;
 let gamePaused = false;
 let gameOver = false;
-
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
 
 let player = { x: 50, y: 500, width: 30, height: 30, vy: 0 };
 let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false }];
@@ -117,10 +117,35 @@ canvas.addEventListener('touchstart', function() {
   }
 });
 
+function drawEverything() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw platforms
+  ctx.fillStyle = 'gray';
+  for (let plat of platforms) {
+    ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+    if (plat.obstacle) {
+      ctx.fillStyle = 'red';
+      ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
+      ctx.fillStyle = 'gray'; // reset fill color
+    }
+  }
+
+  // Draw coins
+  ctx.fillStyle = 'gold';
+  for (let coin of coins) {
+    ctx.beginPath();
+    ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw player
+  ctx.fillStyle = 'cyan';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
 function gameLoop() {
   if (!gameStarted || gamePaused || gameOver) return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   distance += 0.1;
   document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
@@ -128,28 +153,23 @@ function gameLoop() {
 
   speed += 0.0005;
 
-  // Move platforms and coins
   for (let plat of platforms) plat.x -= speed;
   for (let coin of coins) coin.x -= speed;
 
-  // Generate new platforms
   if (platforms[platforms.length - 1].x < 300) {
     const platWidth = 80 + Math.random() * 120;
-    const platHeight = 20;
     const platY = 400 + Math.random() * 250;
     const hasObstacle = Math.random() < 0.3;
-    platforms.push({ x: 480, y: platY, width: platWidth, height: platHeight, obstacle: hasObstacle });
+    platforms.push({ x: 480, y: platY, width: platWidth, height: 20, obstacle: hasObstacle });
 
     if (Math.random() < 0.5) {
       coins.push({ x: 480 + platWidth / 2 - 10, y: platY - 30, width: 20, height: 20 });
     }
   }
 
-  // Cleanup old platforms and coins
   if (platforms[0].x + platforms[0].width < 0) platforms.shift();
   if (coins.length > 0 && coins[0].x + coins[0].width < 0) coins.shift();
 
-  // Gravity
   player.vy += 0.5;
   player.y += player.vy;
 
@@ -173,3 +193,28 @@ function gameLoop() {
         endGame();
         return;
       }
+    }
+  }
+
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const coin = coins[i];
+    if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
+        player.y + player.height > coin.y && player.y < coin.y + coin.height) {
+      collectedCoins++;
+      coinSound.play();
+      coins.splice(i, 1);
+    }
+  }
+
+  if (player.y > 720) {
+    endGame();
+    return;
+  }
+
+  drawEverything();
+  requestAnimationFrame(gameLoop);
+}
+</script>
+
+</body>
+</html>
