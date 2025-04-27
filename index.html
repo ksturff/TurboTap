@@ -48,16 +48,23 @@
 <button id="gameOverScreen">Game Over - Click to Restart</button>
 
 <script>
-window.onload = function() {
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+const runnerImg = new Image();
+runnerImg.src = 'Runner1.png';
 
+runnerImg.onload = function() {
+  // Only run the game once the runner image is fully loaded
+  initializeGame();
+};
+
+function initializeGame() {
   let gameStarted = false;
   let gamePaused = false;
   let gameOver = false;
 
-  let player = { x: 50, y: 500, width: 30, height: 30, vy: 0 };
+  let player = { x: 50, y: 500, width: 40, height: 55, vy: 0 };
   let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false }];
   let coins = [];
   let distance = 0;
@@ -140,9 +147,8 @@ window.onload = function() {
       ctx.fill();
     }
 
-    // Draw player
-    ctx.fillStyle = 'cyan';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // Draw player as image
+    ctx.drawImage(runnerImg, player.x, player.y, player.width, player.height);
   }
 
   function gameLoop() {
@@ -174,10 +180,23 @@ window.onload = function() {
     player.vy += 0.5;
     player.y += player.vy;
 
+    // COLLISION BOX
+    const collisionOffsetX = 6;
+    const collisionOffsetY = 4;
+    const collisionWidth = player.width - collisionOffsetX * 2;
+    const collisionHeight = player.height - collisionOffsetY * 2;
+
+    const collisionBox = {
+      x: player.x + collisionOffsetX,
+      y: player.y + collisionOffsetY,
+      width: collisionWidth,
+      height: collisionHeight
+    };
+
     let onGround = false;
     for (let plat of platforms) {
-      if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
-          player.y + player.height > plat.y && player.y + player.height < plat.y + plat.height + 10 && player.vy >= 0) {
+      if (collisionBox.x + collisionBox.width > plat.x && collisionBox.x < plat.x + plat.width &&
+          collisionBox.y + collisionBox.height > plat.y && collisionBox.y + collisionHeight < plat.y + plat.height + 10 && player.vy >= 0) {
         player.y = plat.y - player.height;
         player.vy = 0;
         onGround = true;
@@ -189,8 +208,8 @@ window.onload = function() {
         const obstacleW = 20;
         const obstacleH = 20;
 
-        if (player.x + player.width > obstacleX && player.x < obstacleX + obstacleW &&
-            player.y + player.height > obstacleY && player.y < obstacleY + obstacleH) {
+        if (collisionBox.x + collisionBox.width > obstacleX && collisionBox.x < obstacleX + obstacleW &&
+            collisionBox.y + collisionBox.height > obstacleY && collisionBox.y < obstacleY + obstacleH) {
           endGame();
           return;
         }
@@ -199,8 +218,8 @@ window.onload = function() {
 
     for (let i = coins.length - 1; i >= 0; i--) {
       const coin = coins[i];
-      if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
-          player.y + player.height > coin.y && player.y < coin.y + coin.height) {
+      if (collisionBox.x + collisionBox.width > coin.x && collisionBox.x < coin.x + coin.width &&
+          collisionBox.y + collisionBox.height > coin.y && collisionBox.y < coin.y + coin.height) {
         collectedCoins++;
         coins.splice(i, 1);
       }
@@ -214,7 +233,7 @@ window.onload = function() {
     drawEverything();
     requestAnimationFrame(gameLoop);
   }
-};
+}
 </script>
 
 </body>
