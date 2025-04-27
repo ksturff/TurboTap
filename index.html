@@ -63,7 +63,7 @@ for (let i = 1; i <= 4; i++) {
   backgrounds.push(img);
 }
 
-// Load platforms
+// Load platform images
 const platformsImages = [];
 for (let i = 1; i <= 3; i++) {
   const img = new Image();
@@ -71,11 +71,15 @@ for (let i = 1; i <= 3; i++) {
   platformsImages.push(img);
 }
 
-// Wait until all assets are loaded
-let assetsLoaded = 0;
-const totalAssets = backgrounds.length + platformsImages.length + 1; // 4 backgrounds + 3 platforms + 1 runner
+// Load obstacle image
+const obstacleImg = new Image();
+obstacleImg.src = 'Obstacle1.png';
 
-[runnerImg, ...backgrounds, ...platformsImages].forEach(img => {
+// Preload all assets
+let assetsLoaded = 0;
+const totalAssets = backgrounds.length + platformsImages.length + 1 + 1; // backgrounds + platforms + runner + obstacle
+
+[runnerImg, obstacleImg, ...backgrounds, ...platformsImages].forEach(img => {
   img.onload = () => {
     assetsLoaded++;
     if (assetsLoaded === totalAssets) {
@@ -164,6 +168,11 @@ function initializeGame() {
     for (let plat of platforms) {
       const platformImage = platformsImages[plat.platformType || 0];
       ctx.drawImage(platformImage, plat.x, plat.y, plat.width, 20);
+
+      // Draw obstacle if exists
+      if (plat.obstacle) {
+        ctx.drawImage(obstacleImg, plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
+      }
     }
 
     // Draw coins
