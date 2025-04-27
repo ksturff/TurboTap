@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Turbo Tap Parkour</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <style>
+    body { margin: 0; overflow: hidden; background: #0d0d0d; }
+    canvas { display: block; margin: 0 auto; }
+    #startScreen, #pauseBtn, #resumeBtn, #restartBtn, #gameOverScreen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 15px 30px;
+      font-size: 20px;
+      background: #ff3366;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #startScreen { display: block; }
+    #pauseBtn { top: 20px; left: 40%; transform: translateX(-50%); display: none; }
+    #resumeBtn { top: 20px; left: 60%; transform: translateX(-50%); display: none; }
+    #restartBtn { display: none; }
+    #gameOverScreen { display: none; }
+    #coinCounter, #distanceCounter, #highScoreCounter, #powerUpMessage {
+      position: absolute;
+      color: white;
+      font-size: 20px;
+      font-family: sans-serif;
+    }
+    #coinCounter { top: 20px; left: 20px; }
+    #distanceCounter { top: 20px; right: 20px; }
+    #highScoreCounter { top: 70px; left: 50%; transform: translateX(-50%); font-size: 18px; color: #00ffcc; }
+    #powerUpMessage { top: 100px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; color: yellow; display: none; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="480" height="720"></canvas>
+<div id="coinCounter">Coins: 0</div>
+<div id="distanceCounter">Distance: 0m</div>
+<div id="highScoreCounter"></div>
+<div id="powerUpMessage"></div>
+<button id="startScreen" onclick="startGame()">Start Game</button>
+<button id="pauseBtn" onclick="pauseGame()">Pause</button>
+<button id="resumeBtn" onclick="resumeGame()">Resume</button>
+<button id="restartBtn" onclick="restartGame()">Restart</button>
+<button id="gameOverScreen" onclick="restartGame()">Game Over - Click to Restart</button>
+
+<audio id="jumpSound" src="https://assets.codepen.io/3/jump.mp3"></audio>
+<audio id="coinSound" src="https://assets.codepen.io/3/coin.mp3"></audio>
+<audio id="powerupSound" src="https://assets.codepen.io/3/powerup.mp3"></audio>
+<audio id="deathSound" src="https://assets.codepen.io/3/death.mp3"></audio>
+
+<script>
+// JavaScript code already provided in previous conversation
+</script>
+</body>
+</html>
