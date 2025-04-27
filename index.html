@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <style>
     body { margin: 0; overflow: hidden; background: #0d0d0d; }
-    canvas { display: block; margin: 0 auto; }
+    canvas { display: block; margin: 0 auto; background: #0d0d0d; }
     #startScreen, #pauseBtn, #resumeBtn, #restartBtn, #gameOverScreen {
       position: absolute;
       top: 50%;
@@ -25,7 +25,7 @@
     #resumeBtn { top: 20px; left: 60%; transform: translateX(-50%); display: none; }
     #restartBtn { display: none; }
     #gameOverScreen { display: none; }
-    #coinCounter, #distanceCounter, #highScoreCounter, #powerUpMessage {
+    #coinCounter, #distanceCounter {
       position: absolute;
       color: white;
       font-size: 20px;
@@ -33,8 +33,6 @@
     }
     #coinCounter { top: 20px; left: 20px; }
     #distanceCounter { top: 20px; right: 20px; }
-    #highScoreCounter { top: 70px; left: 50%; transform: translateX(-50%); font-size: 18px; color: #00ffcc; }
-    #powerUpMessage { top: 100px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; color: yellow; display: none; }
   </style>
 </head>
 
@@ -42,8 +40,6 @@
 <canvas id="gameCanvas" width="480" height="720"></canvas>
 <div id="coinCounter">Coins: 0</div>
 <div id="distanceCounter">Distance: 0m</div>
-<div id="highScoreCounter"></div>
-<div id="powerUpMessage"></div>
 <button id="startScreen" onclick="startGame()">Start Game</button>
 <button id="pauseBtn" onclick="pauseGame()">Pause</button>
 <button id="resumeBtn" onclick="resumeGame()">Resume</button>
@@ -60,8 +56,11 @@ let gameStarted = false;
 let gamePaused = false;
 let gameOver = false;
 
-let player = { x: 50, y: 550, width: 30, height: 30, vy: 0 };
-let platforms = [{ x: 0, y: 600, width: 480, height: 20, obstacle: false }];
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let player = { x: 50, y: 500, width: 30, height: 30, vy: 0 };
+let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false }];
 let coins = [];
 let distance = 0;
 let speed = 3;
@@ -111,7 +110,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-document.getElementById('gameCanvas').addEventListener('touchstart', function() {
+canvas.addEventListener('touchstart', function() {
   if (player.vy === 0) {
     player.vy = -12;
     jumpSound.play();
@@ -121,26 +120,23 @@ document.getElementById('gameCanvas').addEventListener('touchstart', function() 
 function gameLoop() {
   if (!gameStarted || gamePaused || gameOver) return;
 
-  const ctx = gameCanvas.getContext('2d');
-  ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   distance += 0.1;
   document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
   document.getElementById('coinCounter').innerText = `Coins: ${collectedCoins}`;
 
-  speed += 0.0005; // Increase speed over time
+  speed += 0.0005;
 
-  for (let plat of platforms) {
-    plat.x -= speed;
-  }
-  for (let coin of coins) {
-    coin.x -= speed;
-  }
+  // Move platforms and coins
+  for (let plat of platforms) plat.x -= speed;
+  for (let coin of coins) coin.x -= speed;
 
+  // Generate new platforms
   if (platforms[platforms.length - 1].x < 300) {
     const platWidth = 80 + Math.random() * 120;
     const platHeight = 20;
-    const platY = 500 + Math.random() * 150;
+    const platY = 400 + Math.random() * 250;
     const hasObstacle = Math.random() < 0.3;
     platforms.push({ x: 480, y: platY, width: platWidth, height: platHeight, obstacle: hasObstacle });
 
@@ -149,13 +145,11 @@ function gameLoop() {
     }
   }
 
-  if (platforms[0].x + platforms[0].width < 0) {
-    platforms.shift();
-  }
-  if (coins.length > 0 && coins[0].x + coins[0].width < 0) {
-    coins.shift();
-  }
+  // Cleanup old platforms and coins
+  if (platforms[0].x + platforms[0].width < 0) platforms.shift();
+  if (coins.length > 0 && coins[0].x + coins[0].width < 0) coins.shift();
 
+  // Gravity
   player.vy += 0.5;
   player.y += player.vy;
 
@@ -179,45 +173,3 @@ function gameLoop() {
         endGame();
         return;
       }
-    }
-  }
-
-  for (let i = coins.length - 1; i >= 0; i--) {
-    const coin = coins[i];
-    if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
-        player.y + player.height > coin.y && player.y < coin.y + coin.height) {
-      collectedCoins++;
-      coinSound.play();
-      coins.splice(i, 1);
-    }
-  }
-
-  ctx.fillStyle = 'cyan';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-
-  for (let plat of platforms) {
-    ctx.fillStyle = 'gray';
-    ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-    if (plat.obstacle) {
-      ctx.fillStyle = 'red';
-      ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
-    }
-  }
-
-  ctx.fillStyle = 'gold';
-  for (let coin of coins) {
-    ctx.beginPath();
-    ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  if (player.y > 720) {
-    endGame();
-    return;
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-</script>
-</body>
-</html>
