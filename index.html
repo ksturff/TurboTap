@@ -51,13 +51,30 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Load player
 const runnerImg = new Image();
 runnerImg.src = 'Runner1.png';
 
-// Wait for runner to load
-runnerImg.onload = function() {
-  initializeGame();
-};
+// Load backgrounds
+const backgrounds = [];
+for (let i = 1; i <= 4; i++) {
+  const img = new Image();
+  img.src = `Background${i}.png`;
+  backgrounds.push(img);
+}
+
+// Wait until everything is loaded
+let assetsLoaded = 0;
+const totalAssets = backgrounds.length + 1; // 4 backgrounds + 1 runner
+
+[runnerImg, ...backgrounds].forEach(img => {
+  img.onload = () => {
+    assetsLoaded++;
+    if (assetsLoaded === totalAssets) {
+      initializeGame();
+    }
+  };
+});
 
 function initializeGame() {
   let gameStarted = false;
@@ -70,6 +87,11 @@ function initializeGame() {
   let distance = 0;
   let speed = 3;
   let collectedCoins = 0;
+
+  // Background scrolling
+  let backgroundSpeed = 2;
+  let backgroundX = 0;
+  let currentBackgroundIndex = 0;
 
   document.getElementById('startScreen').addEventListener('click', startGame);
   document.getElementById('pauseBtn').addEventListener('click', pauseGame);
@@ -113,7 +135,7 @@ function initializeGame() {
     window.location.reload();
   }
 
-  // 🏃‍♂️ Jump anytime on Space or Tap
+  // Jump anytime
   document.addEventListener('keydown', function(e) {
     if (e.code === 'Space') {
       player.vy = -12;
@@ -126,6 +148,10 @@ function initializeGame() {
 
   function drawEverything() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw backgrounds
+    ctx.drawImage(backgrounds[currentBackgroundIndex], backgroundX, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgrounds[(currentBackgroundIndex + 1) % backgrounds.length], backgroundX + canvas.width, 0, canvas.width, canvas.height);
 
     // Draw platforms
     ctx.fillStyle = 'gray';
@@ -146,7 +172,7 @@ function initializeGame() {
       ctx.fill();
     }
 
-    // Draw player as image
+    // Draw player
     ctx.drawImage(runnerImg, player.x, player.y, player.width, player.height);
   }
 
@@ -179,7 +205,14 @@ function initializeGame() {
     player.vy += 0.5;
     player.y += player.vy;
 
-    // COLLISION BOX
+    // Background scrolling
+    backgroundX -= backgroundSpeed;
+    if (backgroundX <= -canvas.width) {
+      backgroundX = 0;
+      currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+    }
+
+    // Collision box
     const collisionOffsetX = 6;
     const collisionOffsetY = 4;
     const collisionWidth = player.width - collisionOffsetX * 2;
