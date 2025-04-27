@@ -37,6 +37,7 @@
     #powerUpMessage { top: 100px; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: bold; color: yellow; display: none; }
   </style>
 </head>
+
 <body>
 <canvas id="gameCanvas" width="480" height="720"></canvas>
 <div id="coinCounter">Coins: 0</div>
@@ -49,13 +50,174 @@
 <button id="restartBtn" onclick="restartGame()">Restart</button>
 <button id="gameOverScreen" onclick="restartGame()">Game Over - Click to Restart</button>
 
-<audio id="jumpSound" src="https://assets.codepen.io/3/jump.mp3"></audio>
-<audio id="coinSound" src="https://assets.codepen.io/3/coin.mp3"></audio>
-<audio id="powerupSound" src="https://assets.codepen.io/3/powerup.mp3"></audio>
-<audio id="deathSound" src="https://assets.codepen.io/3/death.mp3"></audio>
+<audio id="jumpSound" src="assets/jump.mp3"></audio>
+<audio id="coinSound" src="assets/coin.mp3"></audio>
+<audio id="powerupSound" src="assets/powerup.mp3"></audio>
+<audio id="deathSound" src="assets/death.mp3"></audio>
 
 <script>
-// JavaScript code already provided in previous conversation
+let gameStarted = false;
+let gamePaused = false;
+let gameOver = false;
+
+let player = { x: 50, y: 550, width: 30, height: 30, vy: 0 };
+let platforms = [{ x: 0, y: 600, width: 480, height: 20, obstacle: false }];
+let coins = [];
+let distance = 0;
+let speed = 3;
+let collectedCoins = 0;
+
+function startGame() {
+  startScreen.style.display = 'none';
+  gameOverScreen.style.display = 'none';
+  pauseBtn.style.display = 'block';
+  restartBtn.style.display = 'none';
+  gameStarted = true;
+  gamePaused = false;
+  requestAnimationFrame(gameLoop);
+}
+
+function pauseGame() {
+  gamePaused = true;
+  pauseBtn.style.display = 'none';
+  resumeBtn.style.display = 'block';
+}
+
+function resumeGame() {
+  gamePaused = false;
+  resumeBtn.style.display = 'none';
+  pauseBtn.style.display = 'block';
+  requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+  deathSound.play();
+  gameOver = true;
+  gameStarted = false;
+  pauseBtn.style.display = 'none';
+  resumeBtn.style.display = 'none';
+  gameOverScreen.innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
+  gameOverScreen.style.display = 'block';
+}
+
+function restartGame() {
+  window.location.reload();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' && player.vy === 0) {
+    player.vy = -12;
+    jumpSound.play();
+  }
+});
+
+document.getElementById('gameCanvas').addEventListener('touchstart', function() {
+  if (player.vy === 0) {
+    player.vy = -12;
+    jumpSound.play();
+  }
+});
+
+function gameLoop() {
+  if (!gameStarted || gamePaused || gameOver) return;
+
+  const ctx = gameCanvas.getContext('2d');
+  ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  distance += 0.1;
+  document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
+  document.getElementById('coinCounter').innerText = `Coins: ${collectedCoins}`;
+
+  speed += 0.0005; // Increase speed over time
+
+  for (let plat of platforms) {
+    plat.x -= speed;
+  }
+  for (let coin of coins) {
+    coin.x -= speed;
+  }
+
+  if (platforms[platforms.length - 1].x < 300) {
+    const platWidth = 80 + Math.random() * 120;
+    const platHeight = 20;
+    const platY = 500 + Math.random() * 150;
+    const hasObstacle = Math.random() < 0.3;
+    platforms.push({ x: 480, y: platY, width: platWidth, height: platHeight, obstacle: hasObstacle });
+
+    if (Math.random() < 0.5) {
+      coins.push({ x: 480 + platWidth / 2 - 10, y: platY - 30, width: 20, height: 20 });
+    }
+  }
+
+  if (platforms[0].x + platforms[0].width < 0) {
+    platforms.shift();
+  }
+  if (coins.length > 0 && coins[0].x + coins[0].width < 0) {
+    coins.shift();
+  }
+
+  player.vy += 0.5;
+  player.y += player.vy;
+
+  let onGround = false;
+  for (let plat of platforms) {
+    if (player.x + player.width > plat.x && player.x < plat.x + plat.width &&
+        player.y + player.height > plat.y && player.y + player.height < plat.y + plat.height + 10 && player.vy >= 0) {
+      player.y = plat.y - player.height;
+      player.vy = 0;
+      onGround = true;
+    }
+
+    if (plat.obstacle) {
+      const obstacleX = plat.x + plat.width / 2 - 10;
+      const obstacleY = plat.y - 20;
+      const obstacleW = 20;
+      const obstacleH = 20;
+
+      if (player.x + player.width > obstacleX && player.x < obstacleX + obstacleW &&
+          player.y + player.height > obstacleY && player.y < obstacleY + obstacleH) {
+        endGame();
+        return;
+      }
+    }
+  }
+
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const coin = coins[i];
+    if (player.x + player.width > coin.x && player.x < coin.x + coin.width &&
+        player.y + player.height > coin.y && player.y < coin.y + coin.height) {
+      collectedCoins++;
+      coinSound.play();
+      coins.splice(i, 1);
+    }
+  }
+
+  ctx.fillStyle = 'cyan';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+
+  for (let plat of platforms) {
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+    if (plat.obstacle) {
+      ctx.fillStyle = 'red';
+      ctx.fillRect(plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
+    }
+  }
+
+  ctx.fillStyle = 'gold';
+  for (let coin of coins) {
+    ctx.beginPath();
+    ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (player.y > 720) {
+    endGame();
+    return;
+  }
+
+  requestAnimationFrame(gameLoop);
+}
 </script>
 </body>
 </html>
