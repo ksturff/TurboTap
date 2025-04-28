@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang=\"en\">
+<html lang="en">
 <head>
-  <meta charset=\"UTF-8\">
+  <meta charset="UTF-8">
   <title>Turbo Tap Parkour</title>
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <style>
     body { margin: 0; overflow: hidden; background: #0d0d0d; }
     canvas { display: block; margin: 0 auto; background: #0d0d0d; }
@@ -34,105 +34,256 @@
     #distanceCounter { top: 20px; right: 20px; }
   </style>
 </head>
+
 <body>
-<canvas id=\"gameCanvas\" width=\"480\" height=\"720\"></canvas>
-<div id=\"coinCounter\">Coins: 0</div>
-<div id=\"distanceCounter\">Distance: 0m</div>
-<button id=\"startScreen\">Start Game</button>
-<button id=\"pauseBtn\">Pause</button>
-<button id=\"resumeBtn\">Resume</button>
-<button id=\"restartBtn\">Restart</button>
-<button id=\"gameOverScreen\">Game Over - Click to Restart</button>
+<canvas id="gameCanvas" width="480" height="720"></canvas>
+
+<div id="coinCounter">Coins: 0</div>
+<div id="distanceCounter">Distance: 0m</div>
+
+<button id="startScreen">Start Game</button>
+<button id="pauseBtn">Pause</button>
+<button id="resumeBtn">Resume</button>
+<button id="restartBtn">Restart</button>
+<button id="gameOverScreen">Game Over - Click to Restart</button>
+
 <script>
-const runnerImg=new Image();runnerImg.src='Runner1.png';
-const obstacleImg=new Image();obstacleImg.src='Obstacle1.png';
-const backgrounds=[],platformsImages=[],particles=[];
-for(let i=1;i<=4;i++){const img=new Image();img.src=`Background${i}.png`;backgrounds.push(img);}
-for(let i=1;i<=3;i++){const img=new Image();img.src=`Platform${i}.png`;platformsImages.push(img);}
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
+// Load runner
+const runnerImg = new Image();
+runnerImg.src = 'Runner1.png';
 
-let assetsLoaded=0;
-const totalAssets=backgrounds.length+platformsImages.length+2;
-[runnerImg,obstacleImg,...backgrounds,...platformsImages].forEach(img=>{
-  img.onload=()=>{if(++assetsLoaded===totalAssets)initializeGame();};
+// Load backgrounds
+const backgrounds = [];
+for (let i = 1; i <= 4; i++) {
+  const img = new Image();
+  img.src = `Background${i}.png`;
+  backgrounds.push(img);
+}
+
+// Load platform images
+const platformsImages = [];
+for (let i = 1; i <= 3; i++) {
+  const img = new Image();
+  img.src = `Platform${i}.png`;
+  platformsImages.push(img);
+}
+
+// Load obstacle image
+const obstacleImg = new Image();
+obstacleImg.src = 'Obstacle1.png';
+
+// Preload all assets
+let assetsLoaded = 0;
+const totalAssets = backgrounds.length + platformsImages.length + 1 + 1; // backgrounds + platforms + runner + obstacle
+
+[runnerImg, obstacleImg, ...backgrounds, ...platformsImages].forEach(img => {
+  img.onload = () => {
+    assetsLoaded++;
+    if (assetsLoaded === totalAssets) {
+      initializeGame();
+    }
+  };
 });
 
-function initializeGame(){
-  let gameStarted=false,gamePaused=false,gameOver=false;
-  let player={x:50,y:500,width:40,height:55,vy:0};
-  let platforms=[{x:0,y:550,width:480,height:20,obstacle:false,platformType:0}];
-  let coins=[],distance=0,speed=3,collectedCoins=0;
-  let backgroundX=0,currentBackgroundIndex=0,backgroundSpeed=2;
+function initializeGame() {
+  let gameStarted = false;
+  let gamePaused = false;
+  let gameOver = false;
 
-  document.getElementById('startScreen').onclick=()=>{
-    document.getElementById('startScreen').style.display='none';
-    document.getElementById('pauseBtn').style.display='block';
-    gameStarted=true;
+  let player = { x: 50, y: 500, width: 40, height: 55, vy: 0 };
+  let platforms = [{ x: 0, y: 550, width: 480, height: 20, obstacle: false, platformType: 0 }];
+  let coins = [];
+  let distance = 0;
+  let speed = 3;
+  let collectedCoins = 0;
+
+  let backgroundSpeed = 2;
+  let backgroundX = 0;
+  let currentBackgroundIndex = 0;
+
+  document.getElementById('startScreen').addEventListener('click', startGame);
+  document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+  document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+  document.getElementById('restartBtn').addEventListener('click', restartGame);
+  document.getElementById('gameOverScreen').addEventListener('click', restartGame);
+
+  function startGame() {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('gameOverScreen').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+    document.getElementById('restartBtn').style.display = 'none';
+    gameStarted = true;
+    gamePaused = false;
     requestAnimationFrame(gameLoop);
-  };
-  document.getElementById('pauseBtn').onclick=()=>{gamePaused=true;togglePauseResume();};
-  document.getElementById('resumeBtn').onclick=()=>{gamePaused=false;togglePauseResume();requestAnimationFrame(gameLoop);};
-  document.getElementById('restartBtn').onclick=()=>location.reload();
-  document.getElementById('gameOverScreen').onclick=()=>location.reload();
-
-  function togglePauseResume(){
-    document.getElementById('pauseBtn').style.display=gamePaused?'none':'block';
-    document.getElementById('resumeBtn').style.display=gamePaused?'block':'none';
   }
 
-  document.addEventListener('keydown',e=>{if(e.code==='Space')player.vy=-12;});
-  canvas.addEventListener('touchstart',()=>{player.vy=-12;});
-
-  function spawnParticles(x,y){
-    for(let i=0;i<10;i++)particles.push({x,y,vx:(Math.random()-0.5)*4,vy:(Math.random()-1)*4,alpha:1});
+  function pauseGame() {
+    gamePaused = true;
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'block';
   }
 
-  function drawEverything(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(backgrounds[currentBackgroundIndex],backgroundX,0,canvas.width,canvas.height);
-    ctx.drawImage(backgrounds[(currentBackgroundIndex+1)%backgrounds.length],backgroundX+canvas.width,0,canvas.width,canvas.height);
-    platforms.forEach(plat=>{
-      ctx.drawImage(platformsImages[plat.platformType],plat.x,plat.y,plat.width,20);
-      if(plat.obstacle)ctx.drawImage(obstacleImg,plat.x+plat.width/2-10,plat.y-20,20,20);
-    });
-    ctx.fillStyle='gold';coins.forEach(coin=>{ctx.beginPath();ctx.arc(coin.x+10,coin.y+10,10,0,Math.PI*2);ctx.fill();});
-    ctx.drawImage(runnerImg,player.x,player.y,player.width,player.height);
-    particles.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;p.alpha-=0.05;if(p.alpha<=0)particles.splice(i,1);ctx.fillStyle=`rgba(0,255,255,${p.alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
+  function resumeGame() {
+    gamePaused = false;
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+    requestAnimationFrame(gameLoop);
   }
 
-  function gameLoop(){
-    if(!gameStarted||gamePaused||gameOver)return;
+  function endGame() {
+    gameOver = true;
+    gameStarted = false;
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('gameOverScreen').innerText = `Game Over!\nYou ran ${Math.floor(distance)} meters\nCollected ${collectedCoins} coins\nClick to Restart`;
+    document.getElementById('gameOverScreen').style.display = 'block';
+  }
 
-    distance+=0.1;speed+=0.0005;
-    document.getElementById('distanceCounter').innerText=`Distance: ${Math.floor(distance)}m`;
-    document.getElementById('coinCounter').innerText=`Coins: ${collectedCoins}`;
+  function restartGame() {
+    window.location.reload();
+  }
 
-    platforms.forEach(plat=>plat.x-=speed);coins.forEach(coin=>coin.x-=speed);
+  // Jump anytime
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') {
+      player.vy = -12;
+    }
+  });
 
-    if(platforms[platforms.length-1].x<300){
-      const platWidth=80+Math.random()*120,platY=400+Math.random()*250;
-      platforms.push({x:480,y:platY,width:platWidth,height:20,obstacle:Math.random()<0.3,platformType:Math.floor(Math.random()*platformsImages.length)});
-      if(Math.random()<0.5)coins.push({x:480+platWidth/2-10,y:platY-30,width:20,height:20});
+  canvas.addEventListener('touchstart', function() {
+    player.vy = -12;
+  });
+
+  function drawEverything() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw backgrounds
+    ctx.drawImage(backgrounds[currentBackgroundIndex], backgroundX, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgrounds[(currentBackgroundIndex + 1) % backgrounds.length], backgroundX + canvas.width, 0, canvas.width, canvas.height);
+
+    // Draw platforms
+    for (let plat of platforms) {
+      const platformImage = platformsImages[plat.platformType || 0];
+      ctx.drawImage(platformImage, plat.x, plat.y, plat.width, 20);
+
+      // Draw obstacle if exists
+      if (plat.obstacle) {
+        ctx.drawImage(obstacleImg, plat.x + plat.width / 2 - 10, plat.y - 20, 20, 20);
+      }
     }
 
-    player.vy+=0.5;player.y+=player.vy;
+    // Draw coins
+    ctx.fillStyle = 'gold';
+    for (let coin of coins) {
+      ctx.beginPath();
+      ctx.arc(coin.x + 10, coin.y + 10, 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-    let onGround=false;
-    platforms.forEach(plat=>{
-      if(player.x+player.width>plat.x&&player.x<plat.x+plat.width&&player.y+player.height>plat.y&&player.y+player.height<plat.y+plat.height+15&&player.vy>=0){if(!onGround)spawnParticles(player.x+20,player.y+55);player.y=plat.y-player.height;player.vy=0;onGround=true;}
-      if(plat.obstacle&&player.x+30>plat.x+plat.width/2-10&&player.x+10<plat.x+plat.width/2+10&&player.y+50>plat.y-20&&player.y<plat.y)gameOver=true;
-    });
+    // Draw runner
+    ctx.drawImage(runnerImg, player.x, player.y, player.width, player.height);
+  }
 
-    for(let i=coins.length-1;i>=0;i--){const coin=coins[i];if(player.x+player.width-10>coin.x&&player.x+10<coin.x+coin.width&&player.y+player.height-10>coin.y&&player.y+10<coin.y+coin.height){collectedCoins++;coins.splice(i,1);}}
+  function gameLoop() {
+    if (!gameStarted || gamePaused || gameOver) return;
 
-    backgroundX-=backgroundSpeed;if(backgroundX<=-canvas.width){backgroundX=0;currentBackgroundIndex=(currentBackgroundIndex+1)%backgrounds.length;}
-    if(player.y>720)gameOver=true;
+    distance += 0.1;
+    document.getElementById('distanceCounter').innerText = `Distance: ${Math.floor(distance)}m`;
+    document.getElementById('coinCounter').innerText = `Coins: ${collectedCoins}`;
+
+    speed += 0.0005;
+
+    for (let plat of platforms) plat.x -= speed;
+    for (let coin of coins) coin.x -= speed;
+
+    if (platforms[platforms.length - 1].x < 300) {
+      const platWidth = 80 + Math.random() * 120;
+      const platY = 400 + Math.random() * 250;
+      const hasObstacle = Math.random() < 0.3;
+      platforms.push({ 
+        x: 480, 
+        y: platY, 
+        width: platWidth, 
+        height: 20, 
+        obstacle: hasObstacle,
+        platformType: Math.floor(Math.random() * platformsImages.length)
+      });
+
+      if (Math.random() < 0.5) {
+        coins.push({ x: 480 + platWidth / 2 - 10, y: platY - 30, width: 20, height: 20 });
+      }
+    }
+
+    if (platforms[0].x + platforms[0].width < 0) platforms.shift();
+    if (coins.length > 0 && coins[0].x + coins[0].width < 0) coins.shift();
+
+    player.vy += 0.5;
+    player.y += player.vy;
+
+    backgroundX -= backgroundSpeed;
+    if (backgroundX <= -canvas.width) {
+      backgroundX = 0;
+      currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+    }
+
+    // Collision box
+    const collisionOffsetX = 6;
+    const collisionOffsetY = 4;
+    const collisionWidth = player.width - collisionOffsetX * 2;
+    const collisionHeight = player.height - collisionOffsetY * 2;
+
+    const collisionBox = {
+      x: player.x + collisionOffsetX,
+      y: player.y + collisionOffsetY,
+      width: collisionWidth,
+      height: collisionHeight
+    };
+
+    let onGround = false;
+    for (let plat of platforms) {
+      if (collisionBox.x + collisionBox.width > plat.x && collisionBox.x < plat.x + plat.width &&
+          collisionBox.y + collisionBox.height > plat.y && collisionBox.y + collisionHeight < plat.y + plat.height + 10 && player.vy >= 0) {
+        player.y = plat.y - player.height;
+        player.vy = 0;
+        onGround = true;
+      }
+
+      if (plat.obstacle) {
+        const obstacleX = plat.x + plat.width / 2 - 10;
+        const obstacleY = plat.y - 20;
+        const obstacleW = 20;
+        const obstacleH = 20;
+
+        if (collisionBox.x + collisionBox.width > obstacleX && collisionBox.x < obstacleX + obstacleW &&
+            collisionBox.y + collisionBox.height > obstacleY && collisionBox.y < obstacleY + obstacleH) {
+          endGame();
+          return;
+        }
+      }
+    }
+
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const coin = coins[i];
+      if (collisionBox.x + collisionBox.width > coin.x && collisionBox.x < coin.x + coin.width &&
+          collisionBox.y + collisionBox.height > coin.y && collisionBox.y < coin.y + coin.height) {
+        collectedCoins++;
+        coins.splice(i, 1);
+      }
+    }
+
+    if (player.y > 720) {
+      endGame();
+      return;
+    }
+
     drawEverything();
-    if(gameOver)document.getElementById('gameOverScreen').style.display='block';else requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
   }
 }
 </script>
+
 </body>
 </html>
