@@ -167,7 +167,13 @@ function initializeGame() {
     // Draw platforms
     for (let plat of platforms) {
       const platformImage = platformsImages[plat.platformType || 0];
-      ctx.drawImage(platformImage, plat.x, plat.y, plat.width, 20);
+
+      // Calculate scale factor to maintain aspect ratio
+      const scaleFactor = 100 / platformImage.width; // Target width of 100px
+      const targetHeight = platformImage.height * scaleFactor; // Scale height proportionally
+
+      // Draw the platform with scaled width and height
+      ctx.drawImage(platformImage, plat.x, plat.y, 100, targetHeight); // 100px width as target
 
       // Draw obstacle if exists
       if (plat.obstacle) {
